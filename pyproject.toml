@@ -1,0 +1,27 @@
+[project]
+name = "epub2mp3"
+version = "0.1.0"
+description = "epub电子书转mp3文件工具"
+authors = [
+    {name = "hanxi", email = "im.hanxi@gmail.com"},
+]
+dependencies = [
+    "edge-tts>=6.1.9",
+    "ebooklib>=0.18.0",
+    "beautifulsoup4>=4.12.2",
+    "py-spy>=0.4.1",
+]
+requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.scripts]
+start = "python -m epub2mp3.main"
