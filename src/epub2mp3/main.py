@@ -1,22 +1,39 @@
 import asyncio
 import os
+import random
 from typing import Optional
 import edge_tts
 import argparse
-from .utils import get_chapters, sanitize_filename, ensure_output_dir
+from .utils import (
+    get_chapters,
+    sanitize_filename,
+    ensure_output_dir,
+    write_lyrics_to_mp3,
+    convert_mp3_high_quality,
+    add_bgm,
+)
 import time
-from asyncio import Semaphore
 
 
 class EpubToMP3Converter:
     def __init__(
-        self, voice: str, output_dir: str, max_concurrent: int = 3, max_retries: int = 3
+        self,
+        voice: str,
+        output_dir: str,
+        max_retries: int = 3,
+        bg_dir=None,
     ):
         self.voice = voice
         self.output_dir = output_dir
-        self.max_concurrent = max_concurrent
         self.max_retries = max_retries
-        self.semaphore = Semaphore(max_concurrent)
+        self.bg_files = None
+        if bg_dir and os.path.isdir(bg_dir):
+            self.bg_files = [
+                os.path.join(bg_dir, f)
+                for f in os.listdir(bg_dir)
+                if os.path.isfile(os.path.join(bg_dir, f))
+                and f.lower().endswith(".mp3")
+            ]
         ensure_output_dir(output_dir)
 
     async def text_to_speech_with_retry(self, text: str, output_file: str) -> None:
@@ -26,21 +43,11 @@ class EpubToMP3Converter:
         for attempt in range(self.max_retries):
             try:
                 print(f"[{output_file}] Attempt {attempt + 1}/{self.max_retries}")
-
-                async def _convert():
-                    async with self.semaphore:
-                        print(f"[{output_file}] Got semaphore, starting conversion")
-                        communicate = edge_tts.Communicate(text, self.voice)
-                        await communicate.save(output_file)
-
-                # 添加30秒超时
-                await asyncio.wait_for(_convert(), timeout=30)
+                communicate = edge_tts.Communicate(text, self.voice)
+                await communicate.save(output_file)
                 print(f"[{output_file}] Conversion successful")
                 return
 
-            except asyncio.TimeoutError:
-                print(f"[{output_file}] Conversion timed out after 30 seconds")
-                last_exception = asyncio.TimeoutError("Conversion timed out")
             except Exception as e:
                 last_exception = e
                 print(f"[{output_file}] Attempt {attempt + 1} failed: {str(e)}")
@@ -99,6 +106,11 @@ class EpubToMP3Converter:
         """处理单个章节的转换，包含错误处理"""
         try:
             await self.text_to_speech_with_retry(content, output_path)
+            if self.bg_files and len(self.bg_files) > 0:
+                bg_path = random.choice(self.bg_files)
+                add_bgm(output_path, bg_path)
+            convert_mp3_high_quality(output_path)
+            write_lyrics_to_mp3(output_path, content)
             print(f"Successfully converted chapter {index}: {title}")
         except Exception as e:
             print(f"Failed to convert chapter {index}: {title}")
@@ -136,14 +148,6 @@ def main():
     )
 
     parser.add_argument(
-        "-c",
-        "--concurrent",
-        type=int,
-        default=3,
-        help="最大并发转换数量。\n默认值: 3",
-    )
-
-    parser.add_argument(
         "-r",
         "--retries",
         type=int,
@@ -151,13 +155,20 @@ def main():
         help="转换失败时的最大重试次数。\n默认值: 3",
     )
 
+    parser.add_argument(
+        "-b",
+        "--bg-dir",
+        type=str,
+        help="背景音乐文件所在目录，如果指定，程序会随机选择一个背景音乐添加到每个章节的音频中。\n默认不添加背景音乐。",
+    )
+
     args = parser.parse_args()
 
     converter = EpubToMP3Converter(
         voice=args.voice,
         output_dir=args.output_dir,
-        max_concurrent=args.concurrent,
         max_retries=args.retries,
+        bg_dir=args.bg_dir if "bg_dir" in args else None,
     )
 
     try:

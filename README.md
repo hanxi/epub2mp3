@@ -8,13 +8,15 @@
 - 并发处理章节，提高转换效率
 - 智能限流和重试机制
 - 可自定义的输出目录和文件命名
-- 支持断点续传（失败章节记录）
+- 支持错误重试
+- 支持为章节音频添加背景音乐
+- 支持写入歌词
 
 ## 帮助
 
 ```
 pdm start -h
-usage: main.py [-h] [-v VOICE] [-o OUTPUT_DIR] [-c CONCURRENT] [-r RETRIES] epub_path
+usage: main.py [-h] [-v VOICE] [-o OUTPUT_DIR] [-r RETRIES] [-b BG_DIR] epub_path
 
 将 EPUB 电子书转换为 MP3 音频文件，每章一个文件。
 
@@ -31,12 +33,12 @@ options:
   -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         保存生成的 MP3 文件的目录。
                         默认值: output_audio
-  -c CONCURRENT, --concurrent CONCURRENT
-                        最大并发转换数量。
-                        默认值: 3
   -r RETRIES, --retries RETRIES
                         转换失败时的最大重试次数。
                         默认值: 3
+  -b BG_DIR, --bg-dir BG_DIR
+                        背景音乐文件所在目录，如果指定，程序会随机择一个背景音乐添加到每个章节的音频中。
+                        默认不添加背景音乐。
 ```
 
 运行测试：

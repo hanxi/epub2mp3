@@ -10,6 +10,8 @@ dependencies = [
     "ebooklib>=0.18.0",
     "beautifulsoup4>=4.12.2",
     "py-spy>=0.4.1",
+    "mutagen>=1.47.0",
+    "imageio-ffmpeg>=0.6.0",
 ]
 requires-python = ">=3.12"
 readme = "README.md"
