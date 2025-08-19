@@ -85,7 +85,11 @@ def write_lyrics_to_mp3(mp3_path: str, lyrics_text: str):
     """将文本作为带均匀时间标签的歌词写入mp3的歌词标签"""
     try:
         audio = MP3(mp3_path, ID3=ID3)
-        duration = audio.info.length
+        duration = int(audio.info.length)
+        # 增加一个健壮性检查，防止时长过短导致除零等错误
+        if duration < 1:
+            print(f"[{mp3_path}] 写入歌词标签失败: 音频时长过短 (小于1秒)。")
+            return
         lrc_text = make_lrc_lines_by_duration(lyrics_text, duration)
         if audio.tags is None:
             audio.add_tags()
