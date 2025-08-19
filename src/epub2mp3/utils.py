@@ -54,22 +54,31 @@ def ensure_output_dir(output_dir: str) -> None:
 
 def make_lrc_lines_by_duration(text: str, duration_sec: int):
     """
-    按mp3总时长均匀分配每行歌词的时间戳
+    生成LRC歌词，将所有歌词放在第一秒到最后一秒之间显示，去除换行符
+
+    参数:
+    text: str - 包含歌词的文本
+    duration_sec: int - 音频总时长（秒）
+
+    返回:
+    str - 格式化的LRC歌词文本（只有开始和结束两行）
     """
-    lines = [line.strip() for line in re.split(r"[\r\n]+", text) if line.strip()]
-    n = len(lines)
-    if n == 0:
+    # 清理文本：去除多余空白，将换行替换为空格
+    cleaned_text = " ".join(text.split())
+
+    if not cleaned_text:
         return ""
-    interval = duration_sec / n
-    lrc_lines = []
-    for idx, line in enumerate(lines):
-        cur_time = int(idx * interval)
-        ms = int((idx * interval - cur_time) * 100)
-        mm = cur_time // 60
-        ss = cur_time % 60
-        time_tag = f"[{mm:02d}:{ss:02d}.{ms:02d}]"
-        lrc_lines.append(f"{time_tag}{line}")
-    return "\n".join(lrc_lines)
+
+    # 创建开始时间戳 (第1秒)
+    start_tag = "[00:01.00]"
+
+    # 创建结束时间戳 (最后1秒)
+    mm = (duration_sec - 1) // 60
+    ss = (duration_sec - 1) % 60
+    end_tag = f"[{mm:02d}:{ss:02d}.00]"
+
+    # 返回包含开始和结束时间戳的歌词
+    return f"{start_tag}{cleaned_text}\n{end_tag}"
 
 
 def write_lyrics_to_mp3(mp3_path: str, lyrics_text: str):

@@ -1,4 +1,5 @@
 import asyncio
+import tempfile
 import os
 import random
 from typing import Optional
@@ -105,12 +106,18 @@ class EpubToMP3Converter:
     ) -> None:
         """处理单个章节的转换，包含错误处理"""
         try:
-            await self.text_to_speech_with_retry(content, output_path)
+            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp_file:
+                temp_output = tmp_file.name
+
+            await self.text_to_speech_with_retry(content, temp_output)
             if self.bg_files and len(self.bg_files) > 0:
                 bg_path = random.choice(self.bg_files)
-                add_bgm(output_path, bg_path)
-            convert_mp3_high_quality(output_path)
-            write_lyrics_to_mp3(output_path, content)
+                add_bgm(temp_output, bg_path)
+            convert_mp3_high_quality(temp_output)
+            write_lyrics_to_mp3(temp_output, content)
+
+            os.replace(temp_output, output_path)
+
             print(f"Successfully converted chapter {index}: {title}")
         except Exception as e:
             print(f"Failed to convert chapter {index}: {title}")

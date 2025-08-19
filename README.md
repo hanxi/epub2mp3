@@ -53,6 +53,12 @@ pdm start example/mc.epub
 pdm run edge-tts --list-voices
 ```
 
+添加背景音乐
+
+```
+pdm start -b bg -o zh-CN-YunjianNeural example/mc.epub
+```
+
 ## 其他
 
 可以配合 <https://github.com/freeok/so-novel> 下载小说，然后用本工具转换为有声读物。
